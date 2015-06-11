@@ -1,3 +1,7 @@
+/* This is a pretty simple program for me to work on that will give me some sort of idea on how to use curl/libcurl for downloading files from a network.
+This is pretty barebones thus far as I haven't implemented any actual downloading/uploading of files yet.
+*/
+
 #include <iostream>
 #include <string>
 #include <stdlib.h>
