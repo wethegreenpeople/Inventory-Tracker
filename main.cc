@@ -24,9 +24,8 @@ void menu(){
 	std::cout << "Your inventory information: \n\n" << std::endl;
 	std::cout << "(1) Check latest inventory" << std::endl;
 	std::cout << "(2) Update local inventory" << std::endl;
-	std::cout << "(3) Download server inventory" << std::endl;
-	std::cout << "(4) Check Archives" << std::endl;
-	std::cout << "(5) Exit \n" << std::endl;
+	std::cout << "(3) Check Archives" << std::endl;
+	std::cout << "(4) Exit \n" << std::endl;
 	std::cout << "Selection: ";
 }
 
@@ -52,8 +51,7 @@ void checkInvt(){
 
 void updateInvt(){
 	clearScreen();
-	std::string file = "notepad.exe current.txt";
-	system(file.c_str());
+	system("leafpad current.txt");
 }
 
 int main(){
@@ -66,23 +64,8 @@ int main(){
 	const char *const path = "stock/";
 	const char *const file = "current.txt";
 
-	// Check inventory. Displays what you currently have.
+	// Download inventory from internet, if no connection, refer to last inventory download
 	if (menuSelection == 1){
-		chdir ((path));
-		checkInvt();
-		miniMenu();
-	}
-
-	// Update what you currently have, local only, nothing server wise
-	if (menuSelection == 2){
-		chdir((path));
-		updateInvt();
-		checkInvt();
-		miniMenu();
-	}
-
-	// Download server file 
-	if (menuSelection == 3){
 		clearScreen();
 
 		CURL *curl;
@@ -96,15 +79,37 @@ int main(){
 
 			// Check for errors
 			if (res != CURLE_OK){
-				std::cerr << "Sorry, didn't work" << std::endl;
+				std::cerr << curl_easy_strerror(res)
+				<< "\nDo you want to check the last locally downloaded inventory?(y/n): ";
+
+				char checkLast;
+				std::cin >> checkLast;
+
+				if (checkLast == 'y'){
+					chdir((path));
+					clearScreen();
+					checkInvt();
+				} 
 			}
-
-			curl_easy_cleanup(curl);
 			miniMenu();
+			curl_easy_cleanup(curl);
 		}
-
-
 	} 
+
+	// Update what you currently have, local only, nothing server wise
+	if (menuSelection == 2){
+		chdir((path));
+		updateInvt();
+		checkInvt();
+		miniMenu();
+	}
+
+	// Check whatever local stock file you have
+	if (menuSelection == 3){
+		chdir((path));
+		checkInvt();
+		miniMenu();
+	}
 
 	// Exit program
 	else{
