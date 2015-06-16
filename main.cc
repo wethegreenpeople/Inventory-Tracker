@@ -9,6 +9,7 @@ This is pretty barebones thus far as I haven't implemented any actual downloadin
 #include <unistd.h>
 #include <cstdlib>
 #include <curl/curl.h>
+#include <stdio.h>
 
 void clearScreen(){
 	#ifdef _WIN32
@@ -41,8 +42,8 @@ void miniMenu(){
 	}
 }
 
-void checkInvt(){
-	std::ifstream in("current.txt");
+void checkInvt(const char *invtFile){
+	std::ifstream in("invtFile");
 	std::string contents((std::istreambuf_iterator<char>(in)), 
 	    std::istreambuf_iterator<char>());
 	clearScreen();
@@ -52,6 +53,31 @@ void checkInvt(){
 void updateInvt(){
 	clearScreen();
 	system("leafpad current.txt");
+}
+
+void getPage(const char *url, const char *file_name){
+	CURL *curl;
+	CURLcode res;
+	 
+	  curl = curl_easy_init();
+	  if(curl){
+	    curl_easy_setopt(curl, CURLOPT_URL, url);
+	    res = curl_easy_perform(curl);
+	    
+	    // Check for errors
+			if (res != CURLE_OK){
+				std::cerr << curl_easy_strerror(res)
+				<< "\nDo you want to check the last locally downloaded inventory?(y/n): ";
+			}
+		miniMenu();
+		
+		FILE* file = fopen( file_name, "w");
+	    curl_easy_setopt(curl, CURLOPT_WRITEDATA, file) ;
+	    curl_easy_perform(curl);
+	    curl_easy_cleanup(curl);
+		fclose(file);
+		}
+		
 }
 
 int main(){
@@ -67,47 +93,21 @@ int main(){
 	// Download inventory from internet, if no connection, refer to last inventory download
 	if (menuSelection == 1){
 		clearScreen();
-
-		CURL *curl;
-		CURLcode res;
-
-		curl = curl_easy_init();
-		if(curl){
-			curl_easy_setopt(curl, CURLOPT_URL, "http://sansassimports.com/current.txt");
-
-			res = curl_easy_perform(curl);
-
-			// Check for errors
-			if (res != CURLE_OK){
-				std::cerr << curl_easy_strerror(res)
-				<< "\nDo you want to check the last locally downloaded inventory?(y/n): ";
-
-				char checkLast;
-				std::cin >> checkLast;
-
-				if (checkLast == 'y'){
-					chdir((path));
-					clearScreen();
-					checkInvt();
-				} 
-			}
-			miniMenu();
-			curl_easy_cleanup(curl);
-		}
+		getPage("http://sansassimports.com/current.txt", "stock/current.txt");
 	} 
 
 	// Update what you currently have, local only, nothing server wise
 	if (menuSelection == 2){
 		chdir((path));
 		updateInvt();
-		checkInvt();
+		checkInvt("current.txt");
 		miniMenu();
 	}
 
 	// Check whatever local stock file you have
 	if (menuSelection == 3){
 		chdir((path));
-		checkInvt();
+		checkInvt("current.txt");
 		miniMenu();
 	}
 
